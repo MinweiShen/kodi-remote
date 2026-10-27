@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+
+IFS= read -r secret < /etc/remote-touchpad.secret
+exec /home/pi/.local/bin/remote-touchpad \
+  -bind 192.168.0.114:8090 \
+  -secret "$secret"
