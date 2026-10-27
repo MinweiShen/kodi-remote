@@ -66,7 +66,7 @@ flowchart TB
 
 服务由 systemd 管理，原生 Python 运行，无需 Docker、前端构建服务或 CDN。HTTP 页面仅面向可信家庭局域网，Kodi JSON-RPC 只监听 Pi 本机；不应将 8091 端口直接映射到公网。
 
-访问密钥保存在 Pi 的 `/etc/kodi-remote.secret`，登录会话保存在服务内存中。重启遥控服务后，需要用原密钥重新登录；无需重启 Kodi。
+访问密钥默认至少 24 个字符；如需在可信局域网使用短密钥，可在 Pi 的 `/etc/kodi-remote.json` 中显式设置 `"allow_short_secret": true`，此时最少 4 个字符。访问密钥保存在 Pi 的 `/etc/kodi-remote.secret`，登录会话保存在服务内存中。重启遥控服务后，需要用原密钥重新登录；无需重启 Kodi。
 
 ### 代码结构
 

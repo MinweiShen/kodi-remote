@@ -33,8 +33,9 @@ def main():
         if secret_file.stat().st_mode & 0o007:
             parser.error("访问密钥不能允许其他用户读取；建议 root:pi 0640")
         config["secret"] = secret_file.read_text().strip()
-        if len(config["secret"]) < 24:
-            parser.error("访问密钥至少需要 24 个字符")
+        minimum_length = 4 if config.get("allow_short_secret") is True else 24
+        if len(config["secret"]) < minimum_length:
+            parser.error(f"访问密钥至少需要 {minimum_length} 个字符")
         target = urlsplit(config["kodi_url"])
         if target.scheme != "ws" or target.hostname not in ("127.0.0.1", "::1", "localhost"):
             parser.error("Kodi 必须使用本机回环 WebSocket 地址")
