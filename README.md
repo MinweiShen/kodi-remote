@@ -2,6 +2,16 @@
 
 Connect with `ssh pi@192.168.0.114`.
 
+## Kodi browser remote (implementation ready; Pi deployment pending)
+
+Native Python service and buildless iPhone UI in `kodi_remote/`. The main screen contains Kodi status, a progress bar while a video is active, and a full-height touchpad. All buttons live in an overlay menu. Mouse input uses uinput; Unicode text, playback, subtitles and audio use local Kodi JSON-RPC. Previous/next episode searches the current local folder.
+
+- Proposed new service: `kodi-remote.service`, port **8091**; existing 8090 remote-touchpad stays available.
+- Local UI demo: `python3 -m kodi_remote --demo`, then open http://localhost:8091/ with demo key `demo` (requires aiohttp).
+- Installation, test checklist and rollback: [TESTING.md](TESTING.md).
+- Design: [.scratch/kodi-browser-remote/spec.md](.scratch/kodi-browser-remote/spec.md).
+- No SSH passwords, production access keys or Kodi credentials are stored in this repository.
+
 ## MeTube
 
 Installed natively on 2026-10-27, without Docker.

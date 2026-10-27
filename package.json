@@ -1,0 +1,1 @@
+{"name":"kodi-browser-remote","private":true,"type":"module","scripts":{"test":"node --test tests/web.test.mjs","demo":"python3 -m kodi_remote --demo"}}

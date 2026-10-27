@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171917">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Kodi 遥控器</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <script type="module" src="/assets/app.js"></script>
+</head>
+<body>
+  <main class="remote">
+    <header class="topbar">
+      <div class="identity"><span class="brand">kodi<span class="brand-dot">.</span></span><span id="connection" role="status">连接中</span></div>
+      <button id="menu-toggle" class="icon-button" aria-label="打开操作菜单" aria-expanded="false" aria-controls="menu">☰</button>
+    </header>
+    <section id="now-playing" class="now-playing" aria-label="当前播放" hidden>
+      <p id="title"></p>
+      <label class="sr-only" for="progress">播放进度</label>
+      <input id="progress" type="range" min="0" max="1" step="1" value="0">
+      <div class="timecodes"><output id="elapsed">00:00</output><span id="playback-state"></span><output id="duration">00:00</output></div>
+    </section>
+    <div class="workspace">
+      <div id="touchpad" class="touchpad" aria-label="触控板：单指移动，轻点左键，双指轻点右键，双指滑动滚动">
+        <div class="pad-hint" aria-hidden="true"><span class="pad-cross">＋</span><span>单指移动 · 轻点点击</span><span>双指滚动 · 双指轻点右键</span></div>
+        <span id="drag-indicator" class="drag-indicator" hidden>拖拽已锁定 · 打开菜单可释放</span>
+      </div>
+      <section id="menu" class="menu" role="dialog" aria-label="Kodi 操作菜单" hidden>
+        <div class="menu-heading"><span>操作菜单</span><button id="menu-close" class="icon-button" aria-label="关闭操作菜单">×</button></div>
+        <nav class="menu-tabs" aria-label="操作分组">
+          <button data-tab="playback" aria-pressed="true">播放</button><button data-tab="navigation" aria-pressed="false">导航</button><button data-tab="input" aria-pressed="false">输入</button><button data-tab="settings" aria-pressed="false">设置</button>
+        </nav>
+        <div class="menu-content">
+          <section data-panel="playback">
+            <p id="full-title" class="section-note">当前没有播放视频</p>
+            <div class="transport"><button data-action="playpause" data-player id="playpause">播放 / 暂停</button><button data-action="stop" data-player class="quiet">停止</button></div>
+            <div class="seek-grid" aria-label="前后跳转">
+              <button data-seek="-10" data-seekable>−10<span>秒</span></button><button data-seek="10" data-seekable>+10<span>秒</span></button>
+              <button data-seek="-60" data-seekable>−1<span>分钟</span></button><button data-seek="60" data-seekable>+1<span>分钟</span></button>
+              <button data-seek="-600" data-seekable>−10<span>分钟</span></button><button data-seek="600" data-seekable>+10<span>分钟</span></button>
+            </div>
+            <p id="seek-note" class="section-note" hidden></p>
+            <div class="button-row three"><button data-volume="-5">音量 −</button><button data-action="mute" id="mute">静音</button><button data-volume="5">音量 +</button></div>
+            <p id="volume-note" class="section-note">音量 — · 音频直通时请用电视或功放调节</p>
+            <div class="button-row"><button data-episode="-1" data-player>上一集</button><button data-episode="1" data-player>下一集</button></div>
+            <p class="section-note">按当前文件夹集号切换，不跨季。</p>
+            <div id="episode-choices" hidden><p id="episode-reason" role="status"></p><div id="episode-list" class="choice-list"></div></div>
+            <div class="field-row"><label for="subtitle-enabled">显示字幕</label><input id="subtitle-enabled" type="checkbox" role="switch"></div>
+            <label class="select-label" for="subtitle-track">字幕轨道</label><select id="subtitle-track"></select>
+            <label class="select-label" for="audio-track">音轨</label><select id="audio-track"></select>
+          </section>
+          <section data-panel="navigation" hidden>
+            <p class="section-note">方向键选择，中心确认。</p>
+            <div class="dpad"><button data-nav="up" class="up" aria-label="上">↑</button><button data-nav="left" class="left" aria-label="左">←</button><button data-nav="select" class="center">确认</button><button data-nav="right" class="right" aria-label="右">→</button><button data-nav="down" class="down" aria-label="下">↓</button></div>
+            <div class="button-row"><button data-nav="back">返回</button><button data-nav="home">主页</button></div><button data-nav="context" class="wide">上下文菜单</button>
+          </section>
+          <section data-panel="input" hidden>
+            <p id="input-target" class="section-note">先在电视上打开 Kodi 搜索或文字输入框。</p>
+            <form id="text-form"><label for="text">在 iPhone 上输入</label><textarea id="text" rows="4" maxlength="4096" placeholder="支持中文、英文和数字" autocomplete="off"></textarea><button type="submit" class="primary wide" id="send-text">发送并确认</button></form>
+            <p class="section-note">选字完成后再发送。标准文字对话框支持整段输入；自定义插件输入框可能不支持。</p>
+          </section>
+          <section data-panel="settings" hidden>
+            <div class="field-row"><label for="sensitivity">鼠标灵敏度</label><output id="sensitivity-value">3.0</output></div><input id="sensitivity" type="range" min="1" max="8" step="0.25" value="3">
+            <div class="field-row"><label for="acceleration">快速滑动加速</label><input id="acceleration" type="checkbox" role="switch" checked></div><p class="section-note">慢划精确，快划扩大移动距离。</p>
+            <button id="drag-toggle" class="wide">开启拖拽并关闭菜单</button><p class="section-note">开启后移动即拖拽；再次打开菜单即可释放。</p>
+            <div class="settings-status"><span id="control-status">连接中</span><button id="takeover" class="wide" hidden>接管控制</button><button id="reconnect" class="quiet wide">重新连接</button></div>
+            <p id="demo-note" class="section-note" hidden>演示模式：使用模拟视频，不控制真实 Kodi。可在导航中点“确认”模拟打开输入框。</p>
+          </section>
+        </div>
+      </section>
+    </div>
+    <div id="toast" class="toast" role="status" hidden></div>
+  </main>
+  <div id="login" class="login" hidden><form id="login-form"><p class="eyebrow">RASPBERRY PI / REMOTE</p><h1>Kodi 遥控器</h1><p>输入 Pi 上的访问密钥。</p><label for="secret">访问密钥</label><input id="secret" type="password" autocomplete="current-password" required><p id="login-error" role="alert"></p><button type="submit" class="primary wide">连接</button></form></div>
+</body>
+</html>

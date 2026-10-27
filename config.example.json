@@ -1,0 +1,6 @@
+{
+  "host": "192.168.0.114",
+  "port": 8091,
+  "kodi_url": "ws://127.0.0.1:9090/jsonrpc",
+  "secret_file": "/etc/kodi-remote.secret"
+}
