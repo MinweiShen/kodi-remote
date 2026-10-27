@@ -142,6 +142,13 @@ class RemoteIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_seek_validation_and_stale_media(self):
         ws = await self.ws()
+        self.app.remote.rpc.paused = True
+        self.app.remote.rpc.set_time(100)
+        for delta, expected in ((-3, 97), (3, 100)):
+            with self.subTest(delta=delta):
+                self.assertTrue((await self.action(ws,'seek',seconds=delta))['ok'])
+                self.assertEqual(self.app.remote.rpc.position(), expected)
+        self.assertFalse((await self.action(ws,'seek',seconds=2))['ok'])
         self.assertTrue((await self.action(ws,'seek',seconds=60))['ok'])
         self.assertFalse((await self.action(ws,'seek',seconds=999999))['ok'])
         self.assertFalse((await self.action(ws,'seek',seconds=60,generation=-1))['ok'])

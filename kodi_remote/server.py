@@ -318,7 +318,7 @@ class Remote:
                     raise KodiError("当前视频无法跳转")
                 if action == "seek":
                     delta = message.get("seconds")
-                    if delta not in (-600, -60, -10, 10, 60, 600):
+                    if delta not in (-600, -60, -10, -3, 3, 10, 60, 600):
                         raise ValueError("无效的跳转步长")
                     value = {"seconds": delta}
                 else:
