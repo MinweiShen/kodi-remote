@@ -23,14 +23,16 @@
       <div class="timecodes"><output id="elapsed">00:00</output><span id="playback-state"></span><output id="duration">00:00</output></div>
     </section>
     <div class="workspace">
-      <div id="touchpad" class="touchpad" aria-label="触控板：单指移动，轻点左键，双指轻点右键，双指滑动滚动">
-        <div class="pad-hint" aria-hidden="true"><span class="pad-cross">＋</span><span>单指移动 · 轻点点击</span><span>双指滚动 · 双指轻点右键</span></div>
-        <span id="drag-indicator" class="drag-indicator" hidden>拖拽已锁定 · 打开菜单可释放</span>
-      </div>
+      <section id="main-navigation" class="main-navigation" aria-label="Kodi 导航">
+        <div class="navigation-controls">
+          <div class="dpad"><button data-nav="up" class="up" aria-label="上">↑</button><button data-nav="left" class="left" aria-label="左">←</button><button data-nav="select" class="center">确认</button><button data-nav="right" class="right" aria-label="右">→</button><button data-nav="down" class="down" aria-label="下">↓</button></div>
+          <div class="button-row"><button data-nav="back">返回</button><button data-nav="home">主页</button></div><button data-nav="context" class="wide">上下文菜单</button>
+        </div>
+      </section>
       <section id="menu" class="menu" role="dialog" aria-label="Kodi 操作菜单" hidden>
         <div class="menu-heading"><span>操作菜单</span><button id="menu-close" class="icon-button" aria-label="关闭操作菜单">×</button></div>
         <nav class="menu-tabs" aria-label="操作分组">
-          <button data-tab="playback" aria-pressed="true">播放</button><button data-tab="navigation" aria-pressed="false">导航</button><button data-tab="input" aria-pressed="false">输入</button><button data-tab="settings" aria-pressed="false">设置</button>
+          <button data-tab="playback" aria-pressed="true">播放</button><button data-tab="mouse" aria-pressed="false">鼠标</button><button data-tab="input" aria-pressed="false">输入</button><button data-tab="settings" aria-pressed="false">设置</button>
         </nav>
         <div class="menu-content">
           <section data-panel="playback">
@@ -51,10 +53,12 @@
             <label class="select-label" for="subtitle-track">字幕轨道</label><select id="subtitle-track"></select>
             <label class="select-label" for="audio-track">音轨</label><select id="audio-track"></select>
           </section>
-          <section data-panel="navigation" hidden>
-            <p class="section-note">方向键选择，中心确认。</p>
-            <div class="dpad"><button data-nav="up" class="up" aria-label="上">↑</button><button data-nav="left" class="left" aria-label="左">←</button><button data-nav="select" class="center">确认</button><button data-nav="right" class="right" aria-label="右">→</button><button data-nav="down" class="down" aria-label="下">↓</button></div>
-            <div class="button-row"><button data-nav="back">返回</button><button data-nav="home">主页</button></div><button data-nav="context" class="wide">上下文菜单</button>
+          <section data-panel="mouse" class="mouse-panel" hidden>
+            <div id="touchpad" class="touchpad" aria-label="触控板：单指移动，轻点左键，双指轻点右键，双指滑动滚动">
+              <div class="pad-hint" aria-hidden="true"><span class="pad-cross">＋</span><span>单指移动 · 轻点点击</span><span>双指滚动 · 双指轻点右键</span></div>
+              <span id="drag-indicator" class="drag-indicator" hidden>拖拽已锁定 · 点“释放拖拽”结束</span>
+            </div>
+            <div class="button-row three mouse-buttons"><button data-click="left" data-mouse>左键</button><button data-click="right" data-mouse>右键</button><button id="drag-toggle" data-mouse aria-pressed="false">锁定拖拽</button></div>
           </section>
           <section data-panel="input" hidden>
             <p id="input-target" class="section-note">先在电视上打开 Kodi 搜索或文字输入框。</p>
@@ -64,9 +68,8 @@
           <section data-panel="settings" hidden>
             <div class="field-row"><label for="sensitivity">鼠标灵敏度</label><output id="sensitivity-value">3.0</output></div><input id="sensitivity" type="range" min="1" max="8" step="0.25" value="3">
             <div class="field-row"><label for="acceleration">快速滑动加速</label><input id="acceleration" type="checkbox" role="switch" checked></div><p class="section-note">慢划精确，快划扩大移动距离。</p>
-            <button id="drag-toggle" class="wide">开启拖拽并关闭菜单</button><p class="section-note">开启后移动即拖拽；再次打开菜单即可释放。</p>
             <div class="settings-status"><span id="control-status">连接中</span><button id="takeover" class="wide" hidden>接管控制</button><button id="reconnect" class="quiet wide">重新连接</button></div>
-            <p id="demo-note" class="section-note" hidden>演示模式：使用模拟视频，不控制真实 Kodi。可在导航中点“确认”模拟打开输入框。</p>
+            <p id="demo-note" class="section-note" hidden>演示模式：使用模拟视频，不控制真实 Kodi。可在主页面点“确认”模拟打开输入框。</p>
           </section>
         </div>
       </section>

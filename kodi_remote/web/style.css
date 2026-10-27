@@ -23,7 +23,12 @@ input[type=range]{width:100%;height:36px;margin:0;accent-color:var(--accent);tou
 .timecodes{display:flex;justify-content:space-between;font:11px var(--mono);color:var(--muted);margin-top:-3px}
 #playback-state{font-family:var(--font)}
 .workspace{flex:1;min-height:0;position:relative;overflow:hidden}
-.touchpad{position:absolute;inset:0;touch-action:none;user-select:none;-webkit-user-select:none;background-image:radial-gradient(var(--line) .7px,transparent .7px);background-size:24px 24px}
+.main-navigation{position:absolute;inset:0;overflow-y:auto;display:flex;padding:16px 20px;overscroll-behavior:contain}
+.navigation-controls{width:100%;max-width:420px;margin:auto;flex-shrink:0}
+.main-navigation .dpad{margin:0 auto 24px;max-width:420px}
+.main-navigation .dpad button{height:clamp(64px,12vh,104px)}
+.main-navigation .dpad .center{font-size:18px}
+.touchpad{position:relative;flex:1;min-height:140px;border:1px solid var(--line);border-radius:14px;touch-action:none;user-select:none;-webkit-user-select:none;background-image:radial-gradient(var(--line) .7px,transparent .7px);background-size:24px 24px}
 .touchpad.unavailable{opacity:.55}
 .pad-hint{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;flex-direction:column;gap:9px;color:var(--muted);pointer-events:none;font-size:12px;opacity:.5}
 .pad-cross{font-size:34px;font-weight:200;margin-bottom:9px}
@@ -35,6 +40,10 @@ input[type=range]{width:100%;height:36px;margin:0;accent-color:var(--accent);tou
 .menu-tabs button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
 .menu-content{overflow-y:auto;overscroll-behavior:contain;flex:1;min-height:0;padding:16px 20px 24px;scrollbar-width:thin}
 .menu-content>section{max-width:620px;margin:0 auto}
+.menu-content.mouse-mode{display:flex;flex-direction:column}
+.menu-content.mouse-mode>.mouse-panel{display:flex;flex-direction:column;flex:1;min-height:220px;width:100%;max-width:none;margin:0}
+.mouse-buttons{flex:none;margin-bottom:0}
+#drag-toggle[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
 .section-note{color:var(--muted);font-size:12px;line-height:1.7;margin:0 0 14px;overflow-wrap:anywhere}
 .transport{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px;margin-bottom:12px}
 .transport button:first-child,.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:650}

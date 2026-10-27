@@ -23,3 +23,7 @@ Kodi GBM exclusively grabs mouse devices, so kernel-event validation ran briefly
 The first real folder test exposed Kodi's refusal to list directories outside registered media sources. Production now enumerates only the current video's direct parent folder using ordinary pi-user filesystem access, and rejects symlink escapes. A regression test covers this case.
 
 Physical iPhone sensitivity calibration and visual confirmation of Chinese glyphs remain manual checks. See `TESTING.md`.
+
+## Navigation-first UI revision
+
+The main screen now contains navigation controls. The touchpad, explicit left/right clicks and drag lock are in the overlay menu’s Mouse group. Switching groups or closing the menu releases the mouse. The deployment updates static assets without changing the access key or restarting the backend.

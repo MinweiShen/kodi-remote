@@ -13,7 +13,8 @@ const store = {get(key, fallback) {try{return localStorage.getItem(key) ?? fallb
 let sensitivity = Math.min(8,Math.max(1, Number(store.get('sensitivity',3)) || 3));
 let acceleration = store.get('acceleration','true') === 'true';
 let tab = store.get('menu-tab','playback');
-if (!['playback','navigation','input','settings'].includes(tab)) tab = 'playback';
+if(tab==='navigation')tab='mouse';
+if (!['playback','mouse','input','settings'].includes(tab)) tab = 'playback';
 
 function toast(text, error=false) {
   $('#toast').textContent = text; $('#toast').classList.toggle('error',error); $('#toast').hidden=false;
@@ -45,16 +46,20 @@ function flush() {
 function release() {
   flush(); fire('release'); pointers.clear(); gesture=null; dragLocked=false; wheel=0;
   $('#drag-indicator').hidden=true;
+  $('#drag-toggle').textContent='锁定拖拽';$('#drag-toggle').setAttribute('aria-pressed','false');
 }
 function preferences(){fire('preferences',{sensitivity,acceleration});}
 function selectTab(name) {
+  release();
   tab=name;store.set('menu-tab',name);
   $$('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===name)));
   $$('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==name);
   $('.menu-content').scrollTop=0;
+  $('.menu-content').classList.toggle('mouse-mode',name==='mouse');
 }
 function openMenu(open) {
   release(); menuOpen=open; $('#menu').hidden=!open;
+  $('#main-navigation').inert=open;
   $('#menu-toggle').setAttribute('aria-expanded',String(open));
   $('#menu-toggle').setAttribute('aria-label',open?'关闭操作菜单':'打开操作菜单');
   if(open){selectTab(tab);$('#menu-close').focus({preventScroll:true});}
@@ -92,7 +97,7 @@ function render(next) {
   if(!draggingProgress)$('#progress').max=String(state.duration||1);
   $$('[data-player]').forEach(b=>b.disabled=!(online&&control&&state.active));
   $$('[data-seekable]').forEach(b=>b.disabled=!seekable);
-  $$('[data-nav],[data-volume],[data-action="mute"]').forEach(b=>b.disabled=!(online&&control));
+  $$('[data-nav],[data-mouse],[data-volume],[data-action="mute"]').forEach(b=>b.disabled=!(online&&control));
   $('#playpause').textContent=state.speed===0?'继续播放':'暂停播放';
   $('#seek-note').hidden=seekable||!state.active;
   $('#seek-note').textContent='当前视频暂不支持跳转';
@@ -146,6 +151,7 @@ async function connect() {
     if(socket!==ws)return;
     control=false;pointers.clear();samples=[];gesture=null;dragLocked=false;
     $('#drag-indicator').hidden=true;
+    $('#drag-toggle').textContent='锁定拖拽';$('#drag-toggle').setAttribute('aria-pressed','false');
     for(const p of pending.values()){clearTimeout(p.timer);p.reject(new Error('连接已断开，请核对电视；操作不会自动重发'));}pending.clear();
     render({...state,online:false});if(!document.hidden)retryTimer=setTimeout(connect,2000);
   });
@@ -165,6 +171,7 @@ $$('[data-action]').forEach(b=>b.addEventListener('click',()=>act(b.dataset.acti
 $$('[data-seek]').forEach(b=>b.addEventListener('click',()=>act('seek',{seconds:Number(b.dataset.seek)})));
 $$('[data-volume]').forEach(b=>b.addEventListener('click',()=>act('volume',{delta:Number(b.dataset.volume)})));
 $$('[data-nav]').forEach(b=>b.addEventListener('click',()=>act('nav',{key:b.dataset.nav})));
+$$('[data-click]').forEach(b=>b.addEventListener('click',()=>{release();act('click',{button:b.dataset.click});}));
 $$('[data-episode]').forEach(b=>b.addEventListener('click',()=>act('episode',{direction:Number(b.dataset.episode)})));
 function showChoices(result) {
   $('#episode-choices').hidden=false;$('#episode-reason').textContent=result.reason;
@@ -184,7 +191,11 @@ $('#text-form').addEventListener('submit',async e=>{e.preventDefault();if(compos
 $('#sensitivity').value=String(sensitivity);$('#sensitivity-value').textContent=sensitivity.toFixed(2);$('#acceleration').checked=acceleration;
 $('#sensitivity').addEventListener('input',()=>{sensitivity=Number($('#sensitivity').value);$('#sensitivity-value').textContent=sensitivity.toFixed(2);store.set('sensitivity',sensitivity);preferences();});
 $('#acceleration').addEventListener('change',()=>{acceleration=$('#acceleration').checked;store.set('acceleration',acceleration);preferences();});
-$('#drag-toggle').addEventListener('click',()=>{openMenu(false);dragLocked=true;fire('button',{button:'left',down:true});$('#drag-indicator').hidden=false;});
+$('#drag-toggle').addEventListener('click',()=>{
+  if(dragLocked){release();return;}
+  flush();dragLocked=true;fire('button',{button:'left',down:true});$('#drag-indicator').hidden=false;
+  $('#drag-toggle').textContent='释放拖拽';$('#drag-toggle').setAttribute('aria-pressed','true');
+});
 
 const progress=$('#progress');
 progress.addEventListener('pointerdown',()=>{progressCancelled=false;draggingProgress=true;progressGeneration=state.generation;release();});
@@ -197,14 +208,14 @@ progress.addEventListener('pointerup',()=>setTimeout(()=>{draggingProgress=false
 const pad=$('#touchpad');
 pad.addEventListener('contextmenu',e=>e.preventDefault());
 pad.addEventListener('pointerdown',e=>{
-  if(menuOpen||!control||!state.online)return;
+  if(!menuOpen||tab!=='mouse'||!control||!state.online)return;
   e.preventDefault();pad.setPointerCapture(e.pointerId);
   if(pointers.size===0){gesture={started:performance.now(),distance:0,maxFingers:1,cancelled:false,drag:dragLocked};wheel=0;}
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,t:e.timeStamp});
   if(gesture){gesture.maxFingers=Math.max(gesture.maxFingers,pointers.size);if(pointers.size>2)gesture.cancelled=true;}
 });
 pad.addEventListener('pointermove',e=>{
-  const previous=pointers.get(e.pointerId);if(!previous||!gesture||menuOpen)return;
+  const previous=pointers.get(e.pointerId);if(!previous||!gesture||!menuOpen||tab!=='mouse')return;
   e.preventDefault();const dx=e.clientX-previous.x,dy=e.clientY-previous.y,dt=Math.max(1,Math.min(100,e.timeStamp-previous.t));
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,t:e.timeStamp});gesture.distance+=Math.hypot(dx,dy);
   if(gesture.cancelled)return;
