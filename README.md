@@ -107,10 +107,9 @@ python -m kodi_remote --demo
 
 当前安装脚本按用户 `pi` 和 `/home/pi` 布局编写，默认服务地址为 `192.168.0.114:8091`。其他设备需要先调整 `config.example.json` 的 `host`；使用其他用户名或目录时还需要修改安装脚本和 systemd 单元。
 
-在 Pi 上检查现有服务和网络说明。安装脚本要求 `/home/pi/README.md` 与 `/home/pi/README-PROXY.md` 存在，并沿用当前 apt 网络配置；若是全新设备，应先准备适合自身环境的运维说明。
+安装前检查 Pi 的现有服务和网络配置。如设备上已有 `/home/pi/README.md` 或 `/home/pi/README-PROXY.md`，请先阅读；安装脚本会显示这些已有说明，并沿用当前 apt 网络配置。全新设备无需创建这些本机记录。
 
 ```sh
-cat /home/pi/README.md /home/pi/README-PROXY.md
 sudo apt-get update
 sudo apt-get install -y git
 mkdir -p /home/pi/src
@@ -176,7 +175,7 @@ bash -n scripts/install.sh
 
 Node 测试使用内置测试运行器，无需 `npm install`；需要支持 `node:test` 的 Node.js。当前验证结果为 **16 项 Python 测试、8 项 Node 测试通过**，包括 ±3 秒跳转、进度回弹、中文输入目标、跨设备接管、断线释放和上下集识别。
 
-真实 Pi 已验证 uinput、Kodi 播放控制、字幕/音轨、中文对话框和进度拖动。iPhone Safari 的实际触感仍需在设备上验收。完整测试方法与回退步骤见 [TESTING.md](TESTING.md)，原始设计见 [设计文档](.scratch/kodi-browser-remote/spec.md)。
+真实 Pi 已验证 uinput、Kodi 播放控制、字幕/音轨、中文对话框和进度拖动。iPhone Safari 的实际触感仍需在设备上验收。实机联调入口为 `scripts/smoke_pi.py`：默认测试播放控制并恢复原播放状态；`--mode input` 读取 uinput 事件，需要先停止会独占输入设备的 Kodi，测试后重新启动。运行播放测试前关闭其他遥控页面，避免控制权争用。
 
 ## 许可证
 

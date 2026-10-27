@@ -1,7 +1,26 @@
+# Local caches and environments
 __pycache__/
 *.py[cod]
 .venv/
-.DS_Store
+node_modules/
+.pytest_cache/
 .coverage
+.DS_Store
+
+# Local credentials
 *.secret
 .env
+.env.*
+!.env.example
+
+# Personal development notes and agent configuration
+/.scratch/
+/.agents/
+/.codex/
+/AGENTS.md
+/CLAUDE.md
+/TESTING.md
+/docs/agents/
+/remote-touchpad/
+/.idea/
+/.vscode/
