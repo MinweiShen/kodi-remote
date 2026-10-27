@@ -3,9 +3,9 @@ import {formatTime, position, tapButton} from './core.js';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 let socket, state = {online:false, active:false}, control = false, receivedAt = performance.now();
-let requestId = 0, retryTimer, toastTimer, draggingProgress = false, progressGeneration, sendingText = false;
+let requestId = 0, retryTimer, toastTimer, draggingProgress = false, sendingText = false;
 let connecting = false, connectionVersion = 0;
-let progressCancelled = false;
+let progressPointer = null, progressGeneration, pendingSeek = null;
 let menuOpen = false, dragLocked = false, samples = [], frame = 0, gesture = null, wheel = 0;
 const pointers = new Map(), pending = new Map();
 const store = {get(key, fallback) {try{return localStorage.getItem(key) ?? fallback;}catch{return fallback;}},
@@ -82,8 +82,8 @@ function render(next) {
   const oldActive=state.active, oldGeneration=state.generation;
   state=next;receivedAt=performance.now();
   if(oldActive!==state.active || oldGeneration!==state.generation) {
-    if(draggingProgress)progressCancelled=true;
-    release();draggingProgress=false;$('#episode-choices').hidden=true;
+    cancelProgress();
+    release();$('#episode-choices').hidden=true;
   }
   const online=ready()&&state.online;
   $('#connection').textContent=!ready()?'已断线':state.demo?'演示 · 模拟 Kodi':!state.online?'Kodi 不可用':!control?'其他设备控制中':state.active?(state.speed===0?'已暂停':'正在播放'):'已连接';
@@ -94,6 +94,7 @@ function render(next) {
   $('#playback-state').textContent=state.speed===0?'暂停':'';
   const seekable=online&&control&&state.active&&state.canseek&&state.duration>0;
   $('#progress').disabled=!seekable;
+  if(!seekable)cancelProgress();
   if(!draggingProgress)$('#progress').max=String(state.duration||1);
   $$('[data-player]').forEach(b=>b.disabled=!(online&&control&&state.active));
   $$('[data-seekable]').forEach(b=>b.disabled=!seekable);
@@ -117,7 +118,12 @@ function render(next) {
   $('#touchpad').classList.toggle('unavailable',!(online&&control));
 }
 function animateProgress() {
-  if(state.active&&!draggingProgress){const value=position(state,receivedAt,performance.now());$('#progress').value=String(value);$('#elapsed').textContent=formatTime(value);}
+  if(state.active&&!draggingProgress){
+    const now=performance.now(), actual=position(state,receivedAt,now);
+    // Kodi can publish an old poll after accepting a seek. Hold the preview until it catches up.
+    if(pendingSeek?.acknowledged && (Math.abs(actual-pendingSeek.value)<3 || now-pendingSeek.acknowledged>4000))pendingSeek=null;
+    paintProgress(pendingSeek?pendingSeek.value:actual);
+  }
   requestAnimationFrame(animateProgress);
 }
 requestAnimationFrame(animateProgress);
@@ -162,8 +168,8 @@ $('#login-form').addEventListener('submit',async e=>{e.preventDefault();const bu
 }catch(error){$('#login-error').textContent=error.message;}finally{button.disabled=false;}});
 $('#reconnect').addEventListener('click',()=>{release();if(socket)socket.close();else connect();});
 $('#takeover').addEventListener('click',()=>act('takeover'));
-document.addEventListener('visibilitychange',()=>{if(document.hidden){++connectionVersion;release();clearTimeout(retryTimer);socket?.close();}else connect();});
-window.addEventListener('pagehide',()=>{release();socket?.close();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){++connectionVersion;cancelProgress();release();clearTimeout(retryTimer);socket?.close();}else connect();});
+window.addEventListener('pagehide',()=>{cancelProgress();release();socket?.close();});
 function viewport(){document.documentElement.style.setProperty('--viewport-height',`${window.visualViewport?.height||window.innerHeight}px`);}
 window.visualViewport?.addEventListener('resize',()=>{release();viewport();});window.addEventListener('resize',()=>{release();viewport();});viewport();
 
@@ -198,12 +204,59 @@ $('#drag-toggle').addEventListener('click',()=>{
 });
 
 const progress=$('#progress');
-progress.addEventListener('pointerdown',()=>{progressCancelled=false;draggingProgress=true;progressGeneration=state.generation;release();});
-progress.addEventListener('keydown',()=>{progressCancelled=false;progressGeneration=state.generation;});
-progress.addEventListener('input',()=>{draggingProgress=true;$('#elapsed').textContent=formatTime(Number(progress.value));});
-progress.addEventListener('change',()=>{const value=Number(progress.value);draggingProgress=false;if(progressCancelled||(progressGeneration!==undefined&&progressGeneration!==state.generation))return;act('seek_to',{seconds:value});});
-progress.addEventListener('pointercancel',()=>{draggingProgress=false;});
-progress.addEventListener('pointerup',()=>setTimeout(()=>{draggingProgress=false;progressGeneration=undefined;},0));
+function paintProgress(value) {
+  progress.value=String(value);
+  $('#elapsed').textContent=formatTime(value);
+  progress.setAttribute('aria-valuetext',`${formatTime(value)} / ${formatTime(state.duration)}`);
+  progress.style.setProperty('--progress-fill',`${Math.max(0,Math.min(100,value/Number(progress.max)*100))}%`);
+}
+function cancelProgress() {
+  const pointer=progressPointer;
+  progressPointer=null;draggingProgress=false;pendingSeek=null;
+  progress.classList.toggle('scrubbing',false);
+  if(pointer!==null&&progress.hasPointerCapture(pointer))progress.releasePointerCapture(pointer);
+}
+function previewProgress(e) {
+  const rect=progress.getBoundingClientRect();
+  // Match the 28px thumb's travel so both ends remain reachable.
+  const fraction=(e.clientX-rect.left-14)/Math.max(1,rect.width-28);
+  paintProgress(Math.round(Math.max(0,Math.min(1,fraction))*Number(progress.max)));
+}
+async function commitProgress() {
+  draggingProgress=false;progress.classList.toggle('scrubbing',false);
+  if(progress.disabled||progressGeneration!==state.generation)return;
+  const seek={value:Number(progress.value),acknowledged:0};
+  pendingSeek=seek;
+  const result=await act('seek_to',{seconds:seek.value});
+  if(pendingSeek!==seek)return;
+  if(result)seek.acknowledged=performance.now();else pendingSeek=null;
+}
+progress.addEventListener('pointerdown',e=>{
+  if(progress.disabled||e.isPrimary===false||e.button!==0||progressPointer!==null)return;
+  e.preventDefault();release();pendingSeek=null;
+  progressPointer=e.pointerId;progressGeneration=state.generation;draggingProgress=true;
+  progress.focus({preventScroll:true});progress.setPointerCapture(e.pointerId);
+  progress.classList.toggle('scrubbing',true);previewProgress(e);
+});
+progress.addEventListener('pointermove',e=>{
+  if(e.pointerId!==progressPointer)return;
+  e.preventDefault();previewProgress(e);
+});
+progress.addEventListener('pointerup',e=>{
+  if(e.pointerId!==progressPointer)return;
+  e.preventDefault();previewProgress(e);progressPointer=null;
+  if(progress.hasPointerCapture(e.pointerId))progress.releasePointerCapture(e.pointerId);
+  commitProgress();
+});
+progress.addEventListener('pointercancel',e=>{if(e.pointerId===progressPointer)cancelProgress();});
+progress.addEventListener('lostpointercapture',e=>{if(e.pointerId===progressPointer)cancelProgress();});
+// Keep the native range keyboard and assistive-technology behavior.
+progress.addEventListener('input',()=>{
+  if(progressPointer!==null)return;
+  progressGeneration=state.generation;draggingProgress=true;pendingSeek=null;
+  paintProgress(Number(progress.value));
+});
+progress.addEventListener('change',()=>{if(progressPointer===null&&draggingProgress)commitProgress();});
 
 const pad=$('#touchpad');
 pad.addEventListener('contextmenu',e=>e.preventDefault());

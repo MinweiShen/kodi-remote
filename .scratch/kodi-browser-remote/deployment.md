@@ -27,3 +27,9 @@ Physical iPhone sensitivity calibration and visual confirmation of Chinese glyph
 ## Navigation-first UI revision
 
 The main screen now contains navigation controls. The touchpad, explicit left/right clicks and drag lock are in the overlay menu’s Mouse group. Switching groups or closing the menu releases the mouse. The deployment updates static assets without changing the access key or restarting the backend.
+
+## Seek bar interaction fix
+
+Expanded the seek control to a 48px touch target with a 28px thumb. Explicit pointer capture allows track taps and diagonal drags to finish outside the control. A pending seek preview survives stale Kodi polls until position confirmation (with a bounded fallback); cancelled gestures, playback changes, and disconnects discard the gesture. The real page-handler regression reproduces the old 750s → 100s snapback and now passes, along with four other interaction scenarios.
+
+Verified in a 375px Chrome viewport, including starting above the visible track and releasing below it. Static assets are deployed without restarting Kodi or the remote service. Physical iPhone Safari touch feel remains a manual check.
