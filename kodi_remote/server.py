@@ -11,7 +11,7 @@ import aiohttp
 from aiohttp import web
 
 from .demo import DemoKodi
-from .episodes import neighbors, playable
+from .episodes import neighbors, playable, local_videos
 from .mouse import Mouse
 from .rpc import KodiError, KodiRPC
 
@@ -211,8 +211,16 @@ class Remote:
         if not self.current_file or not self.current_file.startswith("/"):
             raise KodiError("上下集仅支持本机视频文件夹")
         parent = str(Path(self.current_file).resolve().parent)
-        result = await self.rpc.call("Files.GetDirectory", directory=parent, media="video")
-        files = self.directory_files(result, parent)
+        if self.demo:
+            result = await self.rpc.call("Files.GetDirectory", directory=parent, media="video")
+            files = self.directory_files(result, parent)
+        else:
+            # Kodi can play a local file while refusing JSON-RPC directory listing outside
+            # registered media sources. Scope OS enumeration to the active file's parent.
+            try:
+                files = await asyncio.to_thread(local_videos, parent)
+            except OSError as exc:
+                raise KodiError("无法读取当前视频文件夹，请检查 pi 用户的读取权限") from exc
         if message["action"] == "choose_episode":
             target = self.choices.get(message.get("choice"))
             if target not in files:

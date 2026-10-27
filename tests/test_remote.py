@@ -1,11 +1,13 @@
 import asyncio
+import tempfile
 import unittest
+from pathlib import Path
 
 import aiohttp
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
 
-from kodi_remote.episodes import identify, neighbors, playable
+from kodi_remote.episodes import identify, neighbors, playable, local_videos
 from kodi_remote.mouse import Mouse
 from kodi_remote.rpc import KodiError, KodiRPC
 from kodi_remote.server import create_app
@@ -43,6 +45,21 @@ class EpisodesTests(unittest.TestCase):
         self.assertFalse(playable("Show NCOP.mkv"))
         self.assertFalse(playable("Show E02.mkv.part"))
         self.assertFalse(playable("Show E02.srt"))
+
+    def test_local_folder_does_not_need_kodi_source_and_excludes_symlink_escape(self):
+        with tempfile.TemporaryDirectory() as folder, tempfile.TemporaryDirectory() as outside:
+            root = Path(folder)
+            current = root / '动漫 S01E01.mkv'
+            target = root / '动漫 S01E02.mkv'
+            current.touch(); target.touch()
+            (root / '动漫 S01E03.mkv.part').touch()
+            (root / 'nested').mkdir()
+            foreign = Path(outside) / '动漫 S01E03.mkv'
+            foreign.touch()
+            (root / '动漫 S01E03.mkv').symlink_to(foreign)
+            files = local_videos(root)
+            self.assertEqual(set(files), {str(current.resolve()), str(target.resolve())})
+            self.assertEqual(neighbors(str(current.resolve()), files, 1)[0], str(target.resolve()))
 
 
 class MouseTests(unittest.TestCase):

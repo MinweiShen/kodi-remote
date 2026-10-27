@@ -2,11 +2,13 @@
 
 Connect with `ssh pi@192.168.0.114`.
 
-## Kodi browser remote (implementation ready; Pi deployment pending)
+## Kodi browser remote (deployed 2026-10-27)
 
 Native Python service and buildless iPhone UI in `kodi_remote/`. The main screen contains Kodi status, a progress bar while a video is active, and a full-height touchpad. All buttons live in an overlay menu. Mouse input uses uinput; Unicode text, playback, subtitles and audio use local Kodi JSON-RPC. Previous/next episode searches the current local folder.
 
-- Proposed new service: `kodi-remote.service`, port **8091**; existing 8090 remote-touchpad stays available.
+- Live interface: http://192.168.0.114:8091/ ; `kodi-remote.service` is enabled at boot. Existing 8090 remote-touchpad stays available.
+- Runtime: `/home/pi/apps/kodi-browser-remote`; versioned source: `/home/pi/src/kodi-browser-remote`; config: `/etc/kodi-remote.json`; access key: `/etc/kodi-remote.secret` (do not print in logs or commit).
+- Real Pi validation passed on Kodi 21.3: uinput movement/click/scroll/release, six seek offsets, pause, progress, volume/mute, subtitle/audio tracks, folder episodes, and Unicode dialog submission. iPhone hand feel still needs the user's physical test.
 - Local UI demo: `python3 -m kodi_remote --demo`, then open http://localhost:8091/ with demo key `demo` (requires aiohttp).
 - Installation, test checklist and rollback: [TESTING.md](TESTING.md).
 - Design: [.scratch/kodi-browser-remote/spec.md](.scratch/kodi-browser-remote/spec.md).

@@ -1,11 +1,15 @@
 # Kodi 浏览器遥控器：运行、部署与测试
 
 实现代码位于 `kodi_remote/`，设计位于 `.scratch/kodi-browser-remote/spec.md`。
-新服务使用 **8091**，旧触控板 **8090** 保留。当前版本已在本机模拟 Kodi 完成自动化和浏览器检查；尚未在 Pi / iPhone Safari 上验收。Pi Connect 本次检查显示设备离线。
+新服务已于 **2026-10-27** 部署，使用 **8091**，旧触控板 **8090** 保留。Pi 实际环境：Debian 13.7 ARM64、Python 3.13、aiohttp 3.11.16、evdev 1.9.1、Kodi 21.3。局域网页面、鉴权及真实 Kodi/uinput 联调已通过；iPhone Safari 的实际触感和电视上的字形显示仍需用户手动验收。
 
-2026-10-27 本地验证结果：15 项 Python 测试、2 项 Node 测试通过，Python/JavaScript 和安装脚本语法检查通过。Chrome 已验证中文提交、暂停、+1 分钟跳转、停止后隐藏进度、覆盖菜单；320 / 375 / 414 / 768 像素宽度均无横向溢出。375×812 视口中，触控板未播放时高 752 像素，播放时高 663 像素，菜单覆盖同一区域而不缩小它。
+2026-10-27 本地验证结果：16 项 Python 测试、2 项 Node 测试通过，Python/JavaScript 和安装脚本语法检查通过。Chrome 已验证中文提交、暂停、+1 分钟跳转、停止后隐藏进度、覆盖菜单；320 / 375 / 414 / 768 像素宽度均无横向溢出。375×812 视口中，触控板未播放时高 752 像素，播放时高 663 像素，菜单覆盖同一区域而不缩小它。
 
 界面记录：[主界面](.scratch/kodi-browser-remote/screenshots/main.jpg)、[播放菜单](.scratch/kodi-browser-remote/screenshots/menu.jpg)。截图使用模拟视频；右侧粉色浮动图标属于测试浏览器扩展，不是遥控器界面。
+
+实机结果：内核输入设备发出了预期的 `REL_X=60 / REL_Y=30`，右键、滚轮与断线释放通过。无声临时视频的播放/暂停、绝对跳转、±10/60/600 秒、软件音量/静音、双音轨、外挂字幕、文件夹上下集和缺集提示均通过；标准 Kodi 输入对话框接受了“流浪地球 2”。测试结束后恢复音量/静音并返回首页，临时视频已清理。播放器暂停定位允许 3 秒以内的解码/关键帧偏差，本次六档跳转均在 1 秒以内。
+
+本次实机发现 Kodi 会拒绝列出未注册为媒体源的目录；上下集功能已改为由 Pi 服务枚举当前视频父目录，排除越界符号链接。手机仍不能提交任意目录或任意文件路径。
 
 ## 1. 先在 Mac 预览界面
 
@@ -41,6 +45,25 @@ bash -n scripts/install.sh
 ```
 
 Python 测试会在回环地址创建临时 HTTP / WebSocket 服务，需允许本机端口监听。测试覆盖：集号与缺集、多版本候选、位移加速和小数保留、访问鉴权和同源限制、旧视频指令拒绝、中文输入目标、跨设备接管、断线释放、取消未发送指令、Kodi 断线不重放请求。Node 测试不需要 `npm install`。
+
+### 在 Pi 重复真实设备测试
+
+`scripts/smoke_pi.py` 默认执行播放测试：生成临时无声长视频，测试完清理并恢复原播放位置及音量/静音。如果没有正在播放的视频，则返回首页。运行时请关闭手机遥控页面，避免多个控制器争用：
+
+```sh
+cd /home/pi/src/kodi-browser-remote
+sudo -u pi /usr/bin/python3 scripts/smoke_pi.py --mode playback
+```
+
+GBM Kodi 会独占鼠标设备，读取内核事件的测试需要短暂停止 Kodi。确认当前没有需要保留的播放后，逐条执行下面三条命令；无论中间测试是否成功，都执行最后一条以恢复 Kodi：
+
+```sh
+sudo systemctl stop kodi
+sudo -u pi /usr/bin/python3 scripts/smoke_pi.py --mode input
+sudo systemctl start kodi
+```
+
+脚本在 Pi 本机读取访问密钥，不打印密钥，也不需要将密钥复制到测试文件。测试使用已安装的 FFmpeg。
 
 ## 3. 安装到 Pi
 

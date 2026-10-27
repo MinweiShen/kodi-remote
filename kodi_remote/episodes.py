@@ -23,6 +23,13 @@ def playable(path):
     return p.suffix.lower() in VIDEO and not EXTRA.search(p.stem)
 
 
+def local_videos(parent):
+    """List only direct playable children; never follow a symlink out of this folder."""
+    root = Path(parent).resolve()
+    return [str(path.resolve()) for path in root.iterdir()
+            if playable(path) and path.is_file() and path.resolve().parent == root]
+
+
 def identify(path):
     stem = Path(path).stem
     # Multi-episode packs and ambiguous ranges require manual selection.
