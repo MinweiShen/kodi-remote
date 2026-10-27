@@ -83,8 +83,8 @@ textarea{margin:12px 0;resize:vertical;line-height:1.6}
 #control-status{font-size:13px;color:var(--muted)}
 .choice-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
 .choice-list button{white-space:normal;text-align:left;overflow-wrap:anywhere;font-size:14px}
-.toast{position:absolute;left:16px;right:16px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:5;background:var(--ink);color:var(--bg);padding:14px 18px;border-radius:12px;box-shadow:0 8px 30px var(--shadow);font-size:13px;line-height:1.5;pointer-events:none}
-.toast.error{background:var(--danger)}
+.toast{position:absolute;top:calc(12px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);z-index:5;background:var(--ink);color:var(--bg);padding:6px 12px;border-radius:8px;box-shadow:0 4px 16px var(--shadow);font-size:12px;line-height:1.4;overflow-wrap:anywhere;pointer-events:none}
+.toast.error{background:var(--danger);padding:10px 14px;font-size:13px;line-height:1.5}
 .login{position:fixed;inset:0;z-index:10;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:28px;overflow:auto}
 .login form{width:100%;max-width:360px}
 .eyebrow{font:11px var(--mono);letter-spacing:1.5px;color:var(--accent)}
