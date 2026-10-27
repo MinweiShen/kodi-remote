@@ -216,8 +216,6 @@ async def main(mode='playback'):
                 await ws.close()
             if original:
                 # Restore application settings and original playback, including paused state.
-                await rpc.call('Application.SetVolume', volume=original['application']['volume'])
-                await rpc.call('Application.SetMute', mute=original['application']['muted'])
                 if original['video']:
                     old = original['video']
                     await rpc.call('Player.Open', item={'file': old['item']['file']}, options={'resume': False})
@@ -231,6 +229,14 @@ async def main(mode='playback'):
                             await rpc.call('Player.Stop', playerid=player['playerid'])
                     await rpc.call('Input.Back')
                     await rpc.call('Input.Home')
+                # Stopping/changing the player can update the audio engine asynchronously.
+                # Restore audio last, and verify instead of relying on RPC acknowledgements.
+                await rpc.call('Application.SetVolume', volume=original['application']['volume'])
+                await rpc.call('Application.SetMute', mute=original['application']['muted'])
+                restored = await rpc.call('Application.GetProperties', properties=['volume', 'muted'])
+                assert restored['volume'] == original['application']['volume']
+                assert restored['muted'] == original['application']['muted']
+                print('RESTORED_AUDIO', json.dumps(restored), flush=True)
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)
             await rpc.close()
